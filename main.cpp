@@ -36,6 +36,16 @@ class LightObject {
   public:
     std::vector<sf::Vector2f> *corners;
 
+    void draw(sf::RenderWindow *window) {
+      sf::VertexArray object(sf::TrianglesFan, corners->size());
+      for (unsigned int x = 0; x < corners->size(); ++x) {
+        object[x].position = corners->at(x);
+        object[x].color = sf::Color(200,200,200,150);
+      }
+
+      window->draw(object, sf::BlendAdd);
+    }
+
     // returns array of triangle points
     void getShadow(sf::Vector2f light, std::vector<sf::Vector2f> *shadowPoints) {
       float winxs = 0;
@@ -175,17 +185,19 @@ int main() {
 
   std::vector<sf::Vector2f> a = {sf::Vector2f(100, 100), sf::Vector2f(200, 50), sf::Vector2f(50, 100)};
   std::vector<sf::Vector2f> c = {sf::Vector2f(900, 700), sf::Vector2f(800, 750), sf::Vector2f(950, 700)};
-
   LightObject b(&a);
   LightObject d(&c);
 
   sf::RenderTexture mainTexture;
   mainTexture.create(1000,800);
+  sf::RenderTexture mainTextureSwap;
+  mainTextureSwap.create(1000,800);
 
   sf::RenderTexture shadowTexture;
   shadowTexture.create(1000,800);
 
   sf::Sprite mainSprite(mainTexture.getTexture());
+  sf::Sprite mainSpriteSwap(mainTextureSwap.getTexture());
   sf::Sprite shadowSprite(shadowTexture.getTexture());
 
   sf::Shader lightShader;
@@ -193,11 +205,22 @@ int main() {
   lightShader.setUniform("texture", mainTexture.getTexture());
   lightShader.setUniform("mask", shadowTexture.getTexture());
 
-  lightShader.setUniform("lightcol", sf::Glsl::Vec4(sf::Color(0.0,255.0,255.0,255.0)));
-
   sf::Clock clock;
   int frames = 0;
   int counter = 0;
+
+  std::vector<LightObject*> lightObjects = {&b, &d, &b, &d, &b, &d, &b, &d, &b, &b, &d, &b, &d, &b, &d, &b, &d, &b, &b, &d, &b, &d, &b, &d, &b, &d, &b};
+  std::vector<sf::Vector2f> lightPoints;
+  std::vector<sf::Glsl::Vec4> lightColors;
+
+  lightPoints.push_back(sf::Vector2f(800,800));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(255.0,0.0,255.0,255.0)));
+
+  lightPoints.push_back(sf::Vector2f(250,250));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(0.0,255.0,255.0,100.0)));
+
+  lightPoints.push_back(sf::Vector2f(450,450));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(100.0,100.0,0.0,100.0)));
 
   while (window.isOpen()) {
     sf::Event event;
@@ -206,79 +229,48 @@ int main() {
         window.close();
     }
 
-    lightShader.setUniform("lightpos", sf::Vector2f(250+counter%400, 300-counter%400));
     std::vector<sf::Vector2f> shadows;
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    b.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
-    d.getShadow(sf::Vector2f(250+counter%400,300-counter%400), &shadows);
 
     window.clear();
     mainTexture.clear(sf::Color(0,0,0,255));
 
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
-    shadowTexture.clear(sf::Color(0,0,0,255));
+    for(unsigned int light = 0; light < lightPoints.size(); ++light) {
+      lightShader.setUniform("lightpos", sf::Vector2f(lightPoints[light].x, 800-lightPoints[light].y));
+      lightShader.setUniform("lightcol", lightColors[light]);
 
-    sf::VertexArray triangle(sf::Triangles, shadows.size());
-    for (unsigned int x = 0; x < shadows.size(); ++x) {
-      triangle[x].position = shadows[x];
-      triangle[x].color = sf::Color::White;
+      shadowTexture.clear(sf::Color(0,0,0,255));
+      shadows.clear();
+
+      for (auto x:lightObjects)
+        x->getShadow(lightPoints[light], &shadows);
+
+      sf::VertexArray triangle(sf::Triangles, shadows.size());
+      for (unsigned int x = 0; x < shadows.size(); ++x) {
+        triangle[x].position = shadows[x];
+        triangle[x].color = sf::Color::White;
+      }
+
+      shadowTexture.draw(triangle);
+
+      for (auto x:lightObjects) {
+        sf::VertexArray objects(sf::TrianglesFan, x->corners->size());
+        for (unsigned int y = 0; y < x->corners->size(); ++y) {
+          objects[y].position = x->corners->at(y);
+          objects[y].color = sf::Color(0,0,0,255);
+        }
+
+        shadowTexture.draw(objects);
+      }
+
+      mainTextureSwap.draw(mainSprite, &lightShader);
+      mainTexture.draw(mainSpriteSwap);
     }
 
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    shadowTexture.draw(triangle);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
-    window.draw(mainSprite, &lightShader);
+    window.draw(mainSprite);
+
+    for (auto x: lightObjects) {
+      x->draw(&window);
+    }
 
     window.display();
 
