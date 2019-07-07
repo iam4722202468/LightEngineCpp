@@ -181,12 +181,19 @@ int main() {
   sf::RenderWindow window(sf::VideoMode(1000, 800), "GPU Lighting Test",
     sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize);
 
-  window.setFramerateLimit(60);
+  //window.setFramerateLimit(60);
 
   std::vector<sf::Vector2f> a = {sf::Vector2f(100, 100), sf::Vector2f(200, 50), sf::Vector2f(50, 100)};
-  std::vector<sf::Vector2f> c = {sf::Vector2f(900, 700), sf::Vector2f(850, 750), sf::Vector2f(950, 700)};
   LightObject b(&a);
+
+  std::vector<sf::Vector2f> c = {sf::Vector2f(900, 700), sf::Vector2f(850, 750), sf::Vector2f(950, 700)};
   LightObject d(&c);
+
+  std::vector<sf::Vector2f> e = {sf::Vector2f(500, 100), sf::Vector2f(700, 50), sf::Vector2f(450, 100)};
+  LightObject f(&e);
+
+  std::vector<sf::Vector2f> g = {sf::Vector2f(500, 500), sf::Vector2f(500, 600), sf::Vector2f(600, 600), sf::Vector2f(600, 500)};
+  LightObject h(&g);
 
   sf::RenderTexture mainTexture;
   mainTexture.create(1000,800);
@@ -214,19 +221,32 @@ int main() {
   int counter = 0;
 
   std::vector<LightObject*> lightObjects = {
-    &b};
+    &b, &d, &f, &h
+  };
 
   std::vector<sf::Vector2f> lightPoints;
   std::vector<sf::Glsl::Vec4> lightColors;
 
   lightPoints.push_back(sf::Vector2f(800,800));
-  lightColors.push_back(sf::Glsl::Vec4(sf::Color(255.0,0.0,255.0,255.0)));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,0.0,200.0,200.0)));
 
   lightPoints.push_back(sf::Vector2f(250,250));
-  lightColors.push_back(sf::Glsl::Vec4(sf::Color(0.0,255.0,255.0,255.0)));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(0.0,200.0,200.0,200.0)));
 
   lightPoints.push_back(sf::Vector2f(800,100));
-  lightColors.push_back(sf::Glsl::Vec4(sf::Color(255.0,255.0,0.0,255.0)));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,0.0,200.0)));
+
+  lightPoints.push_back(sf::Vector2f(100,400));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
+
+  lightPoints.push_back(sf::Vector2f(1000,500));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
+  lightPoints.push_back(sf::Vector2f(1000,500));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
+  lightPoints.push_back(sf::Vector2f(1000,500));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
+  lightPoints.push_back(sf::Vector2f(1000,500));
+  lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
 
   while (window.isOpen()) {
     sf::Event event;
@@ -259,11 +279,8 @@ int main() {
       sf::VertexArray triangle(sf::Triangles, shadows.size());
       for (unsigned int x = 0; x < shadows.size(); ++x) {
         triangle[x].position = shadows[x];
-        std::cout << shadows[x].x << " " << shadows[x].y << "\n";
         triangle[x].color = sf::Color(140,140,140,255);
       }
-
-      std::cout << std::endl;
 
       // Draw shadow triangles to shadow texture
       shadowTexture.draw(triangle);
@@ -279,21 +296,16 @@ int main() {
         shadowTexture.draw(objects);
       }
 
-
-
       shadowTexture.display();
-      //mainTextureSwap.draw(mainSprite, &lightShader);
-      //mainTextureSwap.display();
-      //mainTexture.draw(mainSpriteSwap);
-      
-      mainTexture.draw(shadowSprite);
+      mainTextureSwap.draw(mainSprite, &lightShader);
+      mainTextureSwap.display();
+      mainTexture.draw(mainSpriteSwap, sf::BlendAlpha);
+      mainTexture.display();
     }
 
     blurShader.setUniform("direction", sf::Vector2f(1.0, 0.0));
     mainTextureSwap.draw(mainSprite, &blurShader);
     blurShader.setUniform("direction", sf::Vector2f(0.0, 1.0));
-
-    mainTextureSwap.display();
 
     window.draw(mainSpriteSwap, &blurShader);
 
