@@ -1,5 +1,7 @@
 uniform sampler2D texture;
 uniform vec2 direction;
+uniform float screenX;
+uniform float screenY;
 
 vec4 blur13(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
   vec4 color = vec4(0.0);
@@ -17,7 +19,7 @@ vec4 blur13(sampler2D image, vec2 uv, vec2 resolution, vec2 direction) {
 }
 
 void main() {
-  vec2 iResolution = vec2(1000.0,800.0);
+  vec2 iResolution = vec2(screenX,screenY);
   vec2 uv = vec2(gl_FragCoord.xy / iResolution.xy);
   vec4 blur = blur13(texture, uv, iResolution.xy, direction);
 
