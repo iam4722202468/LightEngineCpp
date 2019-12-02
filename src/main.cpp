@@ -21,26 +21,25 @@ int main() {
 
   sf::RenderTexture mainTexture;
   mainTexture.create(SCREEN_X,SCREEN_Y);
-  sf::RenderTexture mainTextureSwap;
-  mainTextureSwap.create(SCREEN_X,SCREEN_Y);
 
   sf::RenderTexture shadowTexture;
   shadowTexture.create(SCREEN_X,SCREEN_Y);
 
   sf::Sprite mainSprite(mainTexture.getTexture());
-  sf::Sprite mainSpriteSwap(mainTextureSwap.getTexture());
   sf::Sprite shadowSprite(shadowTexture.getTexture());
+
+  sf::Texture lightMask;
+  if (!lightMask.loadFromFile("resources/mask.png"))
+  {
+    std::cout << "resources/mask.png not found" << std::endl;
+    return 1;
+  }
 
   sf::Shader lightShader;
   lightShader.loadFromFile("resources/light.frag", sf::Shader::Fragment);
   lightShader.setUniform("texture", mainTexture.getTexture());
   lightShader.setUniform("mask", shadowTexture.getTexture());
-
-  sf::Shader blurShader;
-  blurShader.loadFromFile("resources/blur.frag", sf::Shader::Fragment);
-  blurShader.setUniform("texture", mainTexture.getTexture());
-  blurShader.setUniform("screenX", (float)SCREEN_X);
-  blurShader.setUniform("screenY", (float)SCREEN_Y);
+  lightShader.setUniform("light", lightMask);
 
   sf::Clock clock;
   int frames = 0;
@@ -69,6 +68,8 @@ int main() {
   lightPoints.push_back(sf::Vector2f(1000,500));
   lightColors.push_back(sf::Glsl::Vec4(sf::Color(200.0,200.0,200.0,200.0)));
 
+  float count = 0;
+
   while (window.isOpen()) {
     sf::Event event;
     while (window.pollEvent(event)) {
@@ -76,10 +77,15 @@ int main() {
         window.close();
     }
 
+    count += 0.02;
+
     std::vector<sf::Vector2f> shadows;
 
     window.clear();
     mainTexture.clear(sf::Color(0,0,0,255));
+
+    lightPoints[0].x = sin(count)*200 + 400;
+    lightPoints[0].y = cos(count)*120 + 400;
 
     for(unsigned int light = 0; light < lightPoints.size(); ++light) {
       lightShader.setUniform("lightpos", sf::Vector2f(lightPoints[light].x, SCREEN_Y-lightPoints[light].y));
@@ -96,7 +102,7 @@ int main() {
       sf::VertexArray triangle(sf::Triangles, shadows.size());
       for (unsigned int x = 0; x < shadows.size(); ++x) {
         triangle[x].position = shadows[x];
-        triangle[x].color = sf::Color(140,140,140,255);
+        triangle[x].color = sf::Color(100,100,100,255);
       }
 
       // Draw shadow triangles to shadow texture
@@ -114,17 +120,13 @@ int main() {
       }
 
       shadowTexture.display();
-      mainTextureSwap.draw(mainSprite, &lightShader);
-      mainTextureSwap.display();
-      mainTexture.draw(mainSpriteSwap, sf::BlendAlpha);
+
+      mainTexture.draw(mainSprite, &lightShader);
       mainTexture.display();
+
     }
 
-    blurShader.setUniform("direction", sf::Vector2f(1.2, 0.0));
-    mainTextureSwap.draw(mainSprite, &blurShader);
-    blurShader.setUniform("direction", sf::Vector2f(0.0, 1.2));
-
-    window.draw(mainSpriteSwap, &blurShader);
+    window.draw(mainSprite);
 
     for (auto x: lightObjects) {
       x->draw(&window);
