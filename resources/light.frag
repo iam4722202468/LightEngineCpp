@@ -3,22 +3,23 @@ uniform sampler2D mask;
 uniform sampler2D light;
 uniform vec4 lightcol;
 uniform vec2 lightpos;
+uniform float distanceScale;
+
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
 
 void main()
 {
   vec4 color = texture2D(texture,gl_TexCoord[0].xy);
+  float distance = distance(gl_FragCoord.xy, lightpos) ;
+  distance += rand(gl_TexCoord[0].x* gl_TexCoord[0].y * lightpos) * distance/20.0;
+  distance *= distanceScale;
 
-  float distance = distance(gl_FragCoord.xy, lightpos);
+  vec4 shadows = texture2D(mask, gl_TexCoord[0].xy);
 
-  vec2 invertedGL = vec2(gl_TexCoord[0].x, gl_TexCoord[0].y);
-  vec4 shadows = texture2D(mask, invertedGL);
-
-  if (distance*1.5 < 1000.0) {
-    vec4 lightBrightness = texture2D(light, vec2(distance*1.5,0.0)/1000.0);
-    vec4 alpha = vec4(1.0,1.0,1.0,0.1);
-
-    color += shadows.x*lightcol*lightBrightness.a/alpha;
-  }
+  vec4 lightBrightness = texture2D(light, vec2(distance,0.0)/1000.0);
+  color += shadows.x*lightcol*lightBrightness.a;
 
   gl_FragColor = color;
 }
