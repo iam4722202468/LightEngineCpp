@@ -65,7 +65,8 @@ void drawLight(
     sf::Sprite *shadowSprite,
     LightPoint *light,
     std::vector<LightObject*> *lightObjects,
-    sf::Vector2f offset
+    sf::Vector2f offset,
+    float scalingFactor
   ) {
   lightShader->setUniform("lightpos", sf::Vector2f(light->pos.x + offset.x, SCREEN_Y-light->pos.y - offset.y));
   lightShader->setUniform("lightcol", light->col);
@@ -76,7 +77,7 @@ void drawLight(
 
   // Get shadows
   for (auto x:*lightObjects)
-    x->getShadow(light, &shadows, offset);
+    x->getShadow(light, &shadows, offset, scalingFactor);
 
   // Convert shadows to drawable triangles
   sf::VertexArray triangle(sf::Triangles, shadows.size());
@@ -91,12 +92,23 @@ void drawLight(
   // Draw back shapes on shadow texture
   for (auto x:*lightObjects) {
     sf::VertexArray objects(sf::TrianglesFan, x->corners->size());
+
+    bool shapeOnScreen = false;
+
     for (unsigned int y = 0; y < x->corners->size(); ++y) {
       objects[y].position = x->corners->at(y) + offset;
       objects[y].color = sf::Color(255,255,255,255);
+
+      // Don't draw shape if offscreen
+      if (objects[y].position.x < SCREEN_X
+          && objects[y].position.x > 0
+          && objects[y].position.y < SCREEN_Y
+          && objects[y].position.y > 0)
+        shapeOnScreen = true;
     }
 
-    shadowTexture->draw(objects);
+    if (shapeOnScreen)
+      shadowTexture->draw(objects);
   }
 
   shadowTexture->display();
@@ -141,12 +153,14 @@ int main() {
     return 1;
   }
 
+  float scalingFactor = 2.2;
+
   sf::Shader lightShader;
   lightShader.loadFromFile("resources/light.frag", sf::Shader::Fragment);
   lightShader.setUniform("texture", mainTexture.getTexture());
   lightShader.setUniform("mask", shadowTexture.getTexture());
   lightShader.setUniform("light", lightMask);
-  lightShader.setUniform("distanceScale", (float)2.2);
+  lightShader.setUniform("distanceScale", scalingFactor);
 
   sf::Clock clock;
   int frames = 0;
@@ -171,13 +185,27 @@ int main() {
     mainTexture.clear(sf::Color(0,0,0,255));
 
     for(unsigned int light = 0; light < lightPoints.size(); ++light) {
-      drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, lightPoints[light], &lightObjects, offset);
+      drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, lightPoints[light], &lightObjects, offset, scalingFactor);
     }
 
     window.draw(mainSprite);
 
     for (auto x: lightObjects) {
-      x->draw(&window, offset);
+      bool shapeOnScreen = false;
+
+      // Don't draw shape if offscreen
+      for (unsigned int y = 0; y < x->corners->size(); ++y) {
+        if (x->corners->at(y).x + offset.x < SCREEN_X
+            && x->corners->at(y).x + offset.x > 0
+            && x->corners->at(y).y + offset.y < SCREEN_Y
+            && x->corners->at(y).y + offset.y > 0) {
+          shapeOnScreen = true;
+          break;
+        }
+      }
+
+      if (shapeOnScreen)
+        x->draw(&window, offset);
     }
 
     window.display();

@@ -35,7 +35,7 @@ class LightObject {
     void draw(sf::RenderWindow *window, sf::Vector2f offset);
 
     // returns array of triangle points
-    void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset);
+    void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor);
 
     LightObject(std::vector<sf::Vector2f> *corners): corners(corners) {}
 };

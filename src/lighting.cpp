@@ -96,7 +96,7 @@ void LightObject::draw(sf::RenderWindow *window, sf::Vector2f offset) {
 }
 
 // returns array of triangle points
-void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset) {
+void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor) {
   float winxs = 0;
   float winxe = MAP_X;
   float winys = 0;
@@ -108,6 +108,10 @@ void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadow
   float outerAngle = 0;
   bool notFoundInner = true;
   bool notFoundOuter = true;
+
+  float scalingAdjust = 1000/scalingFactor;
+
+  bool allPointsFutherThan1000 = true;
 
   // Find inner and outer points
   for (unsigned int x = 0; x < corners->size(); ++x) {
@@ -126,7 +130,19 @@ void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadow
       outer = corner;
       notFoundOuter = false;
     }
+
+    // Return if we're not within visible range of light
+    if (!(corner.x > SCREEN_X - offset.x + scalingAdjust
+        || corner.x < -offset.x - scalingAdjust
+        || corner.y > SCREEN_Y - offset.y + scalingAdjust
+        || corner.y < -offset.y - scalingAdjust)) {
+
+        allPointsFutherThan1000 = false;
+      }
   }
+
+  if (allPointsFutherThan1000)
+    return;
 
   sf::Vector2f edges[2] = {inner, outer};
   sf::Vector2f extended[2];
