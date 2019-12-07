@@ -4,8 +4,10 @@ f = open('data/format', 'w')
 shapes = open('data/map1.shapes', 'r')
 lights = open('data/map1.lights', 'r')
 
-for x in shapes.read().split('\n'):
+for id,x in enumerate(shapes.read().split('\n')):
   data = struct.pack('b', 0) # pack
+  f.write(data)
+  data = struct.pack('i', id) # pack
   f.write(data)
   data = struct.pack('h', len(x.split(' ')))
   f.write(data)
@@ -14,8 +16,11 @@ for x in shapes.read().split('\n'):
     data = struct.pack('i', int(y)) # pack
     f.write(data)
 
-for x in lights.read().split('\n'):
+for id,x in enumerate(lights.read().split('\n')):
   data = struct.pack('b', 1) # pack
+  f.write(data)
+
+  data = struct.pack('i', id) # pack
   f.write(data)
 
   for i,y in enumerate(x.split(' ')):

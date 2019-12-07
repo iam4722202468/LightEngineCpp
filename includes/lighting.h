@@ -16,28 +16,31 @@ bool isAngleBetween(float angle, float start, float end);
 
 class LightPoint {
   public:
+    int id;
     sf::Vector2f pos;
     sf::Glsl::Vec4 col;
 
     void *update;
+    char *bytes; // src for generated objects
 
-    LightPoint(sf::Vector2f pos, sf::Glsl::Vec4 col, void *update = NULL):
-      pos(pos), col(col), update(update) {}
+    LightPoint(int id, sf::Vector2f pos, sf::Glsl::Vec4 col, char *bytes, void *update = NULL):
+      pos(pos), col(col), update(update), bytes(bytes) {}
 };
 
 class LightObject {
   public:
+    int id;
     std::vector<sf::Vector2f> *corners;
     bool directed = false;
     float directedAngle = 0;
     float directedWidth = 0;
+    char *bytes; // src for generated objects
 
     void draw(sf::RenderWindow *window, sf::Vector2f offset);
 
     // returns array of triangle points
     void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor);
-
-    LightObject(std::vector<sf::Vector2f> *corners): corners(corners) {}
+    LightObject(int id, std::vector<sf::Vector2f> *corners, char *bytes): id(id), corners(corners), bytes(bytes) {}
 };
 
 sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winxs, float winys, float winxe, float winye);

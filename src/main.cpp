@@ -6,6 +6,9 @@
 #include <SFML/Graphics.hpp>
 #include "lighting.h"
 
+#define CHUNK_SIZE_X 100
+#define CHUNK_SIZE_Y 100
+
 void loadMap(
     std::string mapName,
     std::vector<LightObject*> *lightObjects,
@@ -18,7 +21,7 @@ void loadMap(
     file.seekg(0, std::ios::beg);
 
     short length;
-    int i;
+    int id;
     char type;
     unsigned char r,g,b,a;
 
@@ -26,9 +29,12 @@ void loadMap(
       file.read((char*)&type, sizeof(type));
 
       if (type == 0x00) {
+        int start = (int)file.tellg() - 1;
+
         int x, y;
         std::vector<sf::Vector2f> *tempVec = new std::vector<sf::Vector2f>;
 
+        file.read((char*)&id, sizeof(id));
         file.read((char*)&length, sizeof(length));
 
         for (int i = 0; i < length/2; ++i) {
@@ -38,10 +44,20 @@ void loadMap(
           tempVec->push_back(sf::Vector2f(x,y));
         }
 
-        lightObjects->push_back(new LightObject(tempVec));
+        int current = file.tellg();
+        char *bytes = new char[current-start];
+
+        file.seekg(start, std::ios::beg);
+        file.read(bytes, current-start);
+
+        lightObjects->push_back(new LightObject(id, tempVec, bytes));
       }
+
       if (type == 0x01) {
+        int start = (int)file.tellg() - 1;
+
         int x,y;
+        file.read((char*)&id, sizeof(id));
         file.read((char*)&x, sizeof(x));
         file.read((char*)&y, sizeof(y));
 
@@ -50,9 +66,12 @@ void loadMap(
         file.read((char*)&b, sizeof(b));
         file.read((char*)&a, sizeof(a));
 
-        lightPoints->push_back(new LightPoint(sf::Vector2f(x,y), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0)));
-        lightPoints->push_back(new LightPoint(sf::Vector2f(x+500,y+500), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0)));
-        lightPoints->push_back(new LightPoint(sf::Vector2f(x+1000,y+1000), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0)));
+        int current = file.tellg();
+        char *bytes = new char[current-start];
+        file.seekg(start, std::ios::beg);
+        file.read(bytes, current-start);
+
+        lightPoints->push_back(new LightPoint(id, sf::Vector2f(x,y), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0), bytes));
       }
     }
   }
@@ -68,6 +87,13 @@ void drawLight(
     sf::Vector2f offset,
     float scalingFactor
   ) {
+  // Don't draw lights that are not visible
+  if (light->pos.x + offset.x < 0 - 1000 / scalingFactor
+      || light->pos.x + offset.x > SCREEN_X + 1000 / scalingFactor
+      || light->pos.y + offset.y < 0 - 1000 / scalingFactor
+      || light->pos.y + offset.y > SCREEN_Y + 1000 / scalingFactor)
+    return;
+
   lightShader->setUniform("lightpos", sf::Vector2f(light->pos.x + offset.x, SCREEN_Y-light->pos.y - offset.y));
   lightShader->setUniform("lightcol", light->col);
 
@@ -117,15 +143,41 @@ void drawLight(
   mainTexture->display();
 }
 
+class MapChunk {
+  public:
+    int chunkx, chunky;
+    int chunkId;
+    bool loaded = false;
+
+    std::vector<LightObject*> lightObjects;
+    std::vector<LightPoint*> lightPoints;
+};
+
+class Map {
+  public:
+    std::vector<MapChunk> loadedChunks;
+    std::vector<MapChunk> requestedChunks;
+};
 
 class Server {
   public:
-    char *getPacket() {};
-};
+    Server() {
+      std::vector<LightObject*> allLightObjects;
+      std::vector<LightPoint*> allLightPoints;
+      loadMap("data/format", &allLightObjects, &allLightPoints);
+    }
 
+    char *getPacket() {}
+    void loadChunk(sf::Vector2f start, sf::Vector2f end) {
+    }
+};
 
 int main() {
   sf::Vector2f offset(100.0,100.0);
+  Server server;
+  Map gameMap;
+
+  server.loadChunk(sf::Vector2f(-1000, -1000), sf::Vector2f(1000, 1000));
 
   // Init
   sf::RenderWindow window(sf::VideoMode(SCREEN_X, SCREEN_Y), "GPU Lighting Test",

@@ -109,10 +109,6 @@ void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadow
   bool notFoundInner = true;
   bool notFoundOuter = true;
 
-  float scalingAdjust = 1000/scalingFactor;
-
-  bool allPointsFutherThan1000 = true;
-
   // Find inner and outer points
   for (unsigned int x = 0; x < corners->size(); ++x) {
     sf::Vector2f corner = corners->at(x);
@@ -130,19 +126,7 @@ void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadow
       outer = corner;
       notFoundOuter = false;
     }
-
-    // Return if we're not within visible range of light
-    if (!(corner.x > SCREEN_X - offset.x + scalingAdjust
-        || corner.x < -offset.x - scalingAdjust
-        || corner.y > SCREEN_Y - offset.y + scalingAdjust
-        || corner.y < -offset.y - scalingAdjust)) {
-
-        allPointsFutherThan1000 = false;
-      }
   }
-
-  if (allPointsFutherThan1000)
-    return;
 
   sf::Vector2f edges[2] = {inner, outer};
   sf::Vector2f extended[2];
