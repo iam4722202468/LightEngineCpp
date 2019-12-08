@@ -1,3 +1,6 @@
+#ifndef LIGHTING_H
+#define LIGHTING_H
+
 #include <vector>
 #include <iostream>
 #include <math.h>
@@ -44,3 +47,5 @@ class LightObject {
 };
 
 sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winxs, float winys, float winxe, float winye);
+
+#endif

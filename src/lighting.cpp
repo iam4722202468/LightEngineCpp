@@ -88,7 +88,7 @@ sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winx
 void LightObject::draw(sf::RenderWindow *window, sf::Vector2f offset) {
   sf::VertexArray object(sf::TrianglesFan, corners->size());
   for (unsigned int x = 0; x < corners->size(); ++x) {
-    object[x].position = corners->at(x) + offset;
+    object[x].position = corners->at(x) - offset;
     object[x].color = sf::Color(150,150,150,255);
   }
 

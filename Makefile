@@ -1,7 +1,7 @@
 IDIR = ./includes
 CC = g++
 
-CPPFLAGS += -I$(IDIR) -std=c++11 -g -lsfml-graphics -lsfml-window -lsfml-system
+CPPFLAGS += -I$(IDIR) -std=c++11 -g -lsfml-graphics -lsfml-window -lsfml-system -g
 DEPS = lighting.h
 
 ODIR = ./build
