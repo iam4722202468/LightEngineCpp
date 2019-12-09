@@ -11,7 +11,7 @@
 
 #define CHUNK_SIZE_X 1000
 #define CHUNK_SIZE_Y 1000
-#define RENDER_DISTANCE 0
+#define RENDER_DISTANCE 1
 
 class MapChunk {
   public:
@@ -39,97 +39,187 @@ class Map {
 
       return chunk;
     }
-
 };
+
+class BufferReader {
+  public:
+    virtual unsigned char getByte() {};
+    virtual short getShort() {};
+    virtual int getInt() {};
+    virtual void setPlace(int) {};
+    virtual int getPlace() {};
+    virtual int getSize() {};
+    virtual void read(char*, int) {};
+};
+
+class FileBufferReader : public BufferReader {
+  std::ifstream file;
+  int size;
+
+  public:
+    FileBufferReader(std::string mapName) {
+      file = std::ifstream(mapName, std::ios::in | std::ios::binary);
+      file.seekg(0, std::ios::end);
+      size = file.tellg();
+      std::cout << size << std::endl;
+      file.seekg(0, std::ios::beg);
+    }
+
+    unsigned char getByte() {
+      unsigned char data;
+      file.read((char*)&data, sizeof(data));
+      return data;
+    }
+
+    short getShort() {
+      short data;
+      file.read((char*)&data, sizeof(data));
+      return data;
+    }
+
+    int getInt() {
+      int data;
+      file.read((char*)&data, sizeof(data));
+      return data;
+    }
+
+    int getSize() {
+      return size;
+    }
+
+    int getPlace() {
+      return file.tellg();
+    }
+
+    void setPlace(int newPlace) {
+      file.seekg(newPlace, std::ios::beg);
+    }
+
+    void read(char *buffer, int bytes) {
+      file.read(buffer, bytes);
+    }
+};
+
+LightPoint *loadLightPoint(BufferReader *file) {
+  int start = (int)file->getPlace() - 5;
+
+  int id = file->getInt();
+  int x = file->getInt();
+  int y = file->getInt();
+
+  unsigned char r = file->getByte();
+  unsigned char g = file->getByte();
+  unsigned char b = file->getByte();
+  unsigned char a = file->getByte();
+
+  int current = file->getPlace();
+
+  char *bytes = new char[current-start];
+  file->setPlace(start);
+  file->read(bytes, current-start);
+
+  LightPoint *newLight = new LightPoint(id, sf::Vector2f(x,y), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0), bytes);
+  return newLight;
+}
+
+LightObject *loadLightObject(BufferReader *file) {
+  int start = file->getPlace() - 5;
+
+  std::vector<sf::Vector2f> *tempVec = new std::vector<sf::Vector2f>;
+
+  int id = file->getInt();
+  int length = file->getShort();
+
+  for (int i = 0; i < length/2; ++i) {
+    int x = file->getInt();
+    int y = file->getInt();
+
+    tempVec->push_back(sf::Vector2f(x,y));
+  }
+
+  int current = file->getPlace();
+
+  char *bytes = new char[current-start];
+  file->setPlace(start);
+  file->read(bytes, current-start);
+
+  if (tempVec->size() > 0)
+    return new LightObject(id, tempVec, bytes);
+
+  delete bytes;
+  delete tempVec;
+  return NULL;
+}
 
 void loadMap(
     std::string mapName,
     Map *map
   ) {
-    std::ifstream file(mapName, std::ios::in | std::ios::binary);
+    FileBufferReader file(mapName);
 
-    file.seekg(0, std::ios::end);
-    int size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    short length;
-    int id;
-    int leng;
-    unsigned char type;
-    unsigned char r,g,b,a;
-
-    while (file.tellg() < size && file.tellg() >= 0) {
-      file.read((char*)&leng, sizeof(leng));
-      file.read((char*)&type, sizeof(type));
+    while (file.getPlace() < file.getSize() && file.getPlace() >= 0) {
+      int leng = file.getInt();
+      unsigned char type = file.getByte();
 
       if (type == 0x00) {
-        int start = (int)file.tellg() - 5;
+        LightObject *newObject = loadLightObject(&file);
 
-        int x, y;
-        std::vector<sf::Vector2f> *tempVec = new std::vector<sf::Vector2f>;
-
-        file.read((char*)&id, sizeof(id));
-        file.read((char*)&length, sizeof(length));
-
-        for (int i = 0; i < length/2; ++i) {
-          file.read((char*)&x, sizeof(x));
-          file.read((char*)&y, sizeof(y));
-
-          tempVec->push_back(sf::Vector2f(x,y));
-        }
-
-        int current = file.tellg();
-
-        char *bytes = new char[current-start];
-        file.seekg(start, std::ios::beg);
-        file.read(bytes, current-start);
-
-        if (tempVec->size() > 0) {
-          int loadx = tempVec->at(0).x/CHUNK_SIZE_X;
-          int loady = tempVec->at(0).y/CHUNK_SIZE_Y;
+        if (newObject != NULL) {
+          int loadx = newObject->corners->at(0).x/CHUNK_SIZE_X;
+          int loady = newObject->corners->at(0).y/CHUNK_SIZE_Y;
 
           MapChunk *addTo = map->getChunk(loadx, loady);
-          LightObject *newLight = new LightObject(id, tempVec, bytes);
-          addTo->lightObjects.push_back(newLight);
+          addTo->lightObjects.push_back(newObject);
         }
       }
 
       if (type == 0x01) {
-        int start = (int)file.tellg() - 5;
-
-        int x,y;
-        file.read((char*)&id, sizeof(id));
-        file.read((char*)&x, sizeof(x));
-        file.read((char*)&y, sizeof(y));
-
-        file.read((char*)&r, sizeof(r));
-        file.read((char*)&g, sizeof(g));
-        file.read((char*)&b, sizeof(b));
-        file.read((char*)&a, sizeof(a));
-
-        int current = file.tellg();
-
-        char *bytes = new char[current-start];
-        file.seekg(start, std::ios::beg);
-        file.read(bytes, current-start);
-
-        int loadx = x/CHUNK_SIZE_X;
-        int loady = y/CHUNK_SIZE_Y;
+        LightPoint *newLight = loadLightPoint(&file);
+        int loadx = newLight->pos.x/CHUNK_SIZE_X;
+        int loady = newLight->pos.y/CHUNK_SIZE_Y;
 
         MapChunk *addTo = map->getChunk(loadx, loady);
-        LightPoint *newLight = new LightPoint(id, sf::Vector2f(x,y), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0), bytes);
         addTo->lightPoints.push_back(newLight);
       }
     }
   }
 
-class FileGetter {
+void loadIntoChunk(
+    char *data,
+    int size,
+    MapChunk *chunk
+  ) {
+    ArrayBufferReader file(data, size);
+
+    while (file.getPlace() < size && file.getPlace() >= 0) {
+      int leng = file.getInt();
+      unsigned char type = file.getByte();
+
+      if (type == 0x00) {
+        LightObject *newObject = loadLightObject(&file);
+
+        if (newObject != NULL)
+          chunk->lightObjects.push_back(newObject);
+      }
+
+      if (type == 0x01) {
+        LightPoint *newLight = loadLightPoint(&file);
+        chunk->lightPoints.push_back(newLight);
+      }
+    }
+  }
+
+class ArrayBufferReader : public BufferReader {
+  char *data;
+  int size;
+  int place = 0;
+
   public:
-    char *data;
-    int size;
-    int place = 0;
-  
-    FileGetter(char *data, int size): data(data), size(size) {}
+    ArrayBufferReader(char *data, int size): data(data), size(size) {}
+
+    void setPlace(int newPlace) { place = newPlace; }
+    int getPlace() { return place; }
+    int getSize() { return size; }
 
     int getInt() {
       int toReturn = 0;
@@ -150,61 +240,12 @@ class FileGetter {
       place += 1;
       return toReturn;
     }
-};
 
-void loadIntoChunk(
-    char *data,
-    int size,
-    MapChunk *chunk
-  ) {
-    FileGetter f(data, size);
-
-    short length;
-    int id;
-    int leng;
-    unsigned char type;
-    unsigned char r,g,b,a;
-
-    while (f.place < size && f.place >= 0) {
-      leng = f.getInt();
-      type = f.getByte();
-
-      if (type == 0x00) {
-        int x, y;
-        std::vector<sf::Vector2f> *tempVec = new std::vector<sf::Vector2f>;
-
-        id = f.getInt();
-        length = f.getShort();
-
-        std::cout << "object\n";
-        for (int i = 0; i < length/2; ++i) {
-          x = f.getInt();
-          y = f.getInt();
-
-          tempVec->push_back(sf::Vector2f(x,y));
-        }
-
-        LightObject *newLight = new LightObject(id, tempVec, NULL);
-        chunk->lightObjects.push_back(newLight);
-      }
-
-      if (type == 0x01) {
-        int x,y;
-
-        id = f.getInt();
-        x = f.getInt();
-        y = f.getInt();
-
-        r = f.getByte();
-        g = f.getByte();
-        b = f.getByte();
-        a = f.getByte();
-
-        LightPoint *newLight = new LightPoint(id, sf::Vector2f(x,y), sf::Glsl::Vec4((float)r/255.0, (float)g/255.0, (float)b/255.0, (float)a/255.0), NULL);
-        chunk->lightPoints.push_back(newLight);
-      }
+    void read(char *buffer, int bytes) {
+      std::memcpy(buffer, &data[place], bytes);
+      place += bytes;
     }
-  }
+};
 
 class Server {
   public:
@@ -303,8 +344,21 @@ void drawLight(
 
   // Get shadows
   for (auto chunk:chunks)
-    for (auto object:chunk->lightObjects)
-      object->getShadow(light, &shadows, offset, scalingFactor);
+    for (auto object:chunk->lightObjects) {
+      bool shapeOnScreen = false;
+
+      for (auto corner:*(object->corners)) {
+        // Don't draw shape if offscreen
+        if (corner.x < SCREEN_X + 1000 / scalingFactor
+            && corner.x > 0 - 1000 / scalingFactor
+            && corner.y < SCREEN_Y + 1000 / scalingFactor
+            && corner.y > 0 - 1000 / scalingFactor)
+          shapeOnScreen = true;
+      }
+
+      if (shapeOnScreen)
+        object->getShadow(light, &shadows, offset, scalingFactor);
+    }
 
   // Convert shadows to drawable triangles
   sf::VertexArray triangle(sf::Triangles, shadows.size());
@@ -329,10 +383,11 @@ void drawLight(
         objects[y].color = sf::Color(255,255,255,255);
 
         // Don't draw shape if offscreen
-        if (objects[y].position.x < SCREEN_X
-            && objects[y].position.x > 0
-            && objects[y].position.y < SCREEN_Y
-            && objects[y].position.y > 0)
+        // Add 1000 so we still draw if we are within 1000 pixels from it
+        if (objects[y].position.x < SCREEN_X + 1000
+            && objects[y].position.x > 0 - 1000
+            && objects[y].position.y < SCREEN_Y + 1000
+            && objects[y].position.y > 0 - 1000)
           shapeOnScreen = true;
       }
 
@@ -417,17 +472,16 @@ int main() {
 
     window.draw(mainSprite);
 
-
     for (auto chunk:map.loadedChunks) {
       for (auto object: chunk->lightObjects) {
         bool shapeOnScreen = false;
 
         // Don't draw shape if offscreen
         for (unsigned int y = 0; y < object->corners->size(); ++y) {
-          if (object->corners->at(y).x - offset.x < SCREEN_X
-              && object->corners->at(y).x - offset.x > 0
-              && object->corners->at(y).y - offset.y < SCREEN_Y
-              && object->corners->at(y).y - offset.y > 0) {
+          if (object->corners->at(y).x - offset.x < SCREEN_X + 1000
+              && object->corners->at(y).x - offset.x > 0 - 1000
+              && object->corners->at(y).y - offset.y < SCREEN_Y + 1000
+              && object->corners->at(y).y - offset.y > 0 - 1000) {
             shapeOnScreen = true;
             break;
           }

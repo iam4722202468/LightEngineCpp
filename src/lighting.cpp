@@ -97,10 +97,10 @@ void LightObject::draw(sf::RenderWindow *window, sf::Vector2f offset) {
 
 // returns array of triangle points
 void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor) {
-  float winxs = 0;
-  float winxe = MAP_X;
-  float winys = 0;
-  float winye = MAP_Y;
+  float winxs = this->negPoint.x - 1000/scalingFactor;
+  float winxe = this->posPoint.x + 1000/scalingFactor;
+  float winys = this->negPoint.y - 1000/scalingFactor;
+  float winye = this->posPoint.y + 1000/scalingFactor;
 
   sf::Vector2f inner;
   sf::Vector2f outer;

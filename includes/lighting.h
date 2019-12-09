@@ -39,11 +39,43 @@ class LightObject {
     float directedWidth = 0;
     char *bytes; // src for generated objects
 
+    // Store largest and small x/y positions
+    sf::Vector2f posPoint;
+    sf::Vector2f negPoint;
+
     void draw(sf::RenderWindow *window, sf::Vector2f offset);
 
     // returns array of triangle points
     void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor);
-    LightObject(int id, std::vector<sf::Vector2f> *corners, char *bytes): id(id), corners(corners), bytes(bytes) {}
+    LightObject(int id, std::vector<sf::Vector2f> *corners, char *bytes): id(id), corners(corners), bytes(bytes) {
+      bool foundNegx = false;
+      bool foundPosx = false;
+      bool foundNegy = false;
+      bool foundPosy = false;
+
+      for (auto corner:*corners) {
+        if (!foundNegx || corner.x < negPoint.x) {
+          negPoint.x = corner.x;
+          foundNegx = true;
+        }
+
+        if (!foundNegy || corner.y < negPoint.y) {
+          negPoint.y = corner.y;
+          foundNegy = true;
+        }
+
+        if (!foundPosx || corner.x > posPoint.x) {
+          posPoint.x = corner.x;
+          foundPosx = true;
+        }
+
+        if (!foundPosy || corner.y > posPoint.y) {
+          posPoint.y = corner.y;
+          foundPosy = true;
+        }
+      }
+    
+    }
 };
 
 sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winxs, float winys, float winxe, float winye);
