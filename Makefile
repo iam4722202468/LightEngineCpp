@@ -2,14 +2,14 @@ IDIR = ./includes
 CC = g++
 
 CPPFLAGS += -I$(IDIR) -std=c++11 -g -lsfml-graphics -lsfml-window -lsfml-system -g
-DEPS = lighting.h
+DEPS = lighting.h client.h consts.h map.h server.h loader.h
 
 ODIR = ./build
 CPPDIR = ./src
 
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o lighting.o
+_OBJ = consts.o main.o lighting.o client.o map.o server.o loader.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: $(CPPDIR)/%.cpp $(DEPS)
