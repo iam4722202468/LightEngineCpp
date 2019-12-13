@@ -43,7 +43,7 @@ class LightObject {
     sf::Vector2f posPoint;
     sf::Vector2f negPoint;
 
-    void draw(sf::RenderWindow *window, sf::Vector2f offset);
+    void draw(sf::RenderWindow *window, sf::Vector2f offset, sf::Texture tree, const sf::Texture main, sf::Shader *texShader);
 
     // returns array of triangle points
     void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor);

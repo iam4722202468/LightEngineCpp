@@ -93,6 +93,10 @@ void loadMap(
     }
   }
 
+int getFirstInt(char *i) {
+  return (unsigned char)i[0]<<0 | (unsigned char)i[1]<<8 | (unsigned char)i[2]<<16 | (unsigned char)i[3]<<24;
+}
+
 class Server {
   public:
     Map map;
@@ -109,11 +113,11 @@ class Server {
       for (auto chunk:map.loadedChunks) {
         if (chunk->x == x && chunk->y == y) {
           for (auto light:chunk->lightPoints) {
-            *length += light->bytes[0];
+            *length += getFirstInt(light->bytes);
             bytes->push_back(light->bytes);
           }
           for (auto object:chunk->lightObjects) {
-            *length += object->bytes[0];
+            *length += getFirstInt(object->bytes);
             bytes->push_back(object->bytes);
           }
         }
@@ -123,7 +127,8 @@ class Server {
 
       int place = 0;
       for (auto i:*bytes) {
-        int length = i[0];
+        int length = getFirstInt(i);
+        std::cout << length << std::endl;
         std::memcpy(&returnBytes[place], i, length);
         place += length;
       }

@@ -1,27 +1,23 @@
-IDIR = ./includes
 CC = g++
+MAIN = hellomake
 
-CPPFLAGS += -I$(IDIR) -std=c++11 -g -lsfml-graphics -lsfml-window -lsfml-system -g
-DEPS = lighting.h client.h consts.h map.h server.h loader.h
+SRC_DIR = src
+OBJ_DIR = build
 
-ODIR = ./build
-CPPDIR = ./src
+SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
+CPPFLAGS += -Iinclude
+CFLAGS += -std=c++11 -g -lsfml-graphics -lsfml-window -lsfml-system -g
+LDFLAGS += -L/includes
+LDLIBS += -lm
 
-_OBJ = consts.o main.o lighting.o client.o map.o server.o loader.o
-OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
+.PHONY: all clean
 
-$(ODIR)/%.o: $(CPPDIR)/%.cpp $(DEPS)
-	$(CC) -c -o $@ $< $(CPPFLAGS)
+all: $(MAIN)
 
-all: main
+$(MAIN): $(OBJ)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
-main: $(OBJ)
-	$(CC) -o $@ $^ $(CPPFLAGS)
-
-.PHONY: clean
-
-clean:
-	rm -f $(ODIR)/*.o rm main
-
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
