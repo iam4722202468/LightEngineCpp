@@ -3,14 +3,29 @@ import numpy as np
 import PIL
 from PIL import Image
 
-img = np.asarray(PIL.Image.open('tree.png'))
+import sys
+
+if (len(sys.argv) < 2):
+  print "Usage: ./trace.py <input file name>"
+  exit(0)
+
+offsetX = 0
+offsetY = 0
+
+if (len(sys.argv) >= 3):
+  offsetX = int(sys.argv[2])
+
+if (len(sys.argv) >= 4):
+  offsetY = int(sys.argv[3])
+
+img = np.asarray(PIL.Image.open(sys.argv[1]))
 found = np.array([[[None, None]]*512]*512)
 
 start = None
 
 counter = 0
-for iy, y in enumerate(img):
-  for ix, x in enumerate(img[iy]):
+for iy, y in enumerate(img[:-1]):
+  for ix, x in enumerate(img[iy][:-1]):
     if x[3] != 0 and (
       img[iy][ix+1][3] == 0 or
       img[iy][ix-1][3] == 0 or
@@ -105,7 +120,7 @@ lines = reducePoints(reducePoints(ordered));
 
 for pix in lines:
     pixels[pix[1]][pix[0]] = (255,255,255)
-    print pix[0], pix[1],
+    print pix[0] + offsetX, pix[1] + offsetY,
 print
 
 print len(lines)

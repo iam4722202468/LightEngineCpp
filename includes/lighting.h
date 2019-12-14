@@ -40,6 +40,7 @@ class LightObject {
     float directedAngle = 0;
     float directedWidth = 0;
     char *bytes; // src for generated objects
+    int renderMethod = 2;
 
     // Store largest and small x/y positions
     sf::Vector2f posPoint;

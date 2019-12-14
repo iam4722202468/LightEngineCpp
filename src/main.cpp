@@ -38,17 +38,19 @@ void drawLight(
     for (auto object:chunk->lightObjects) {
       bool shapeOnScreen = false;
 
-      for (auto corner:*(object->corners)) {
-        // Don't draw shape if offscreen
-        if (corner.x < SCREEN_X + 1000 / scalingFactor
-            && corner.x > 0 - 1000 / scalingFactor
-            && corner.y < SCREEN_Y + 1000 / scalingFactor
-            && corner.y > 0 - 1000 / scalingFactor)
-          shapeOnScreen = true;
-      }
+      if (object->renderMethod == 1) {
+        for (auto corner:*(object->corners)) {
+          // Don't draw shape if offscreen
+          if (corner.x < SCREEN_X + 1000 / scalingFactor
+              && corner.x > 0 - 1000 / scalingFactor
+              && corner.y < SCREEN_Y + 1000 / scalingFactor
+              && corner.y > 0 - 1000 / scalingFactor)
+            shapeOnScreen = true;
+        }
 
-      if (shapeOnScreen)
-        object->getShadow(light, &shadows, offset, scalingFactor);
+        if (shapeOnScreen)
+          object->getShadow(light, &shadows, offset, scalingFactor);
+      }
     }
 
   // Convert shadows to drawable triangles
@@ -102,7 +104,7 @@ int main() {
     return 1;
   }
 
-  float scalingFactor = 2.2;
+  float scalingFactor = 1.8;
 
   sf::Shader lightShader;
   lightShader.loadFromFile("resources/light.frag", sf::Shader::Fragment);
@@ -133,6 +135,7 @@ int main() {
 
   sf::Clock clock;
   int frames = 0;
+  float counter = 0;
   //Init
 
   while (window.isOpen()) {
@@ -160,6 +163,8 @@ int main() {
     objectTexture.clear(sf::Color(0,0,0,0));
     objectNormalTexture.clear(sf::Color(0,0,0,0));
 
+    counter += 0.01;
+
     for (auto chunk:map.loadedChunks) {
       for (auto object: chunk->lightObjects) {
         bool shapeOnScreen = false;
@@ -179,8 +184,14 @@ int main() {
           object->draw(&objectTexture, &objectNormalTexture, offset, &treeTexture, &treeTextureNormal, &normalShader);
       }
 
-      for (auto light:chunk->lightPoints)
+      //if (chunk->lightPoints.size() > 0) {
+      //  chunk->lightPoints.at(1)->pos.x = sin(counter)*200+300;
+      //  chunk->lightPoints.at(1)->pos.y = cos(counter)*200+300;
+      //}
+
+      for (auto light:chunk->lightPoints) {
         drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
+      }
     }
 
     window.draw(mainSprite);
