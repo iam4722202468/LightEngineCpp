@@ -85,14 +85,23 @@ sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winx
   return extended;
 }
 
-void LightObject::draw(sf::RenderWindow *window, sf::Vector2f offset) {
-  sf::VertexArray object(sf::TrianglesFan, corners->size());
-  for (unsigned int x = 0; x < corners->size(); ++x) {
-    object[x].position = corners->at(x) - offset;
-    object[x].color = sf::Color(150,150,150,255);
-  }
+void LightObject::draw(
+    sf::RenderTexture *window,
+    sf::Vector2f offset,
+    sf::Texture *texture,
+    sf::Texture *normalTexture,
+    sf::Shader *normalShader
+  ) {
+    sf::VertexArray object(sf::TrianglesFan, corners->size());
+    for (unsigned int x = 0; x < corners->size(); ++x) {
+      object[x].position = corners->at(x) - offset;
+      object[x].texCoords = corners->at(x);
+    }
 
-  window->draw(object, sf::BlendAdd);
+    normalShader->setUniform("offset", offset);
+    normalShader->setUniform("texture", *texture);
+    normalShader->setUniform("normalTexture", *normalTexture);
+    window->draw(object, normalShader);
 }
 
 // returns array of triangle points

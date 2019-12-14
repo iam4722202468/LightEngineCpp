@@ -3,9 +3,12 @@
 #include <fstream>
 #include <math.h>
 #include <cstring>
+#include <omp.h>
 
 #include <SFML/Graphics.hpp>
 #include "client.h"
+
+#define THREADS 5
 
 void drawLight(
     sf::RenderTexture *mainTexture,
@@ -59,33 +62,6 @@ void drawLight(
 
   // Draw shadow triangles to shadow texture
   shadowTexture->draw(triangle);
-
-  // Draw back shapes on shadow texture
-  for (auto chunk:chunks) {
-    for (auto object:chunk->lightObjects) {
-      sf::VertexArray objects(sf::TrianglesFan, object->corners->size());
-      object->getShadow(light, &shadows, offset, scalingFactor);
-
-      bool shapeOnScreen = false;
-
-      for (unsigned int y = 0; y < object->corners->size(); ++y) {
-        objects[y].position = object->corners->at(y) - offset;
-        objects[y].color = sf::Color(255,255,255,255);
-
-        // Don't draw shape if offscreen
-        // Add 1000 so we still draw if we are within 1000 pixels from it
-        if (objects[y].position.x < SCREEN_X + 1000
-            && objects[y].position.x > 0 - 1000
-            && objects[y].position.y < SCREEN_Y + 1000
-            && objects[y].position.y > 0 - 1000)
-          shapeOnScreen = true;
-      }
-
-      if (shapeOnScreen)
-        shadowTexture->draw(objects);
-    }
-  }
-
   shadowTexture->display();
 
   mainTexture->draw(*mainSprite, lightShader);
@@ -107,10 +83,14 @@ int main() {
   sf::RenderTexture mainTexture;
   mainTexture.create(SCREEN_X,SCREEN_Y);
 
+  sf::RenderTexture objectTexture;
+  objectTexture.create(SCREEN_X,SCREEN_Y);
+
   sf::RenderTexture shadowTexture;
   shadowTexture.create(SCREEN_X,SCREEN_Y);
 
   sf::Sprite mainSprite(mainTexture.getTexture());
+  sf::Sprite objectSprite(objectTexture.getTexture());
   sf::Sprite shadowSprite(shadowTexture.getTexture());
 
   sf::Texture lightMask;
@@ -128,6 +108,24 @@ int main() {
   lightShader.setUniform("mask", shadowTexture.getTexture());
   lightShader.setUniform("light", lightMask);
   lightShader.setUniform("distanceScale", scalingFactor);
+
+  sf::Shader normalShader;
+  normalShader.loadFromFile("resources/normal.frag", sf::Shader::Fragment);
+  normalShader.setUniform("base", mainTexture.getTexture());
+
+  sf::Texture treeTexture;
+  if (!treeTexture.loadFromFile("data/normalMaps/tree.png"))
+  {
+    std::cout << "data/normalMaps/tree.png not found" << std::endl;
+    return 1;
+  }
+
+  sf::Texture treeTextureNormal;
+  if (!treeTextureNormal.loadFromFile("data/normalMaps/tree_normal.png"))
+  {
+    std::cout << "data/normalMaps/tree_normal.png not found" << std::endl;
+    return 1;
+  }
 
   sf::Clock clock;
   int frames = 0;
@@ -155,14 +153,12 @@ int main() {
 
     window.clear();
     mainTexture.clear(sf::Color(0,0,0,255));
+    objectTexture.clear(sf::Color(0,0,0,0));
 
-    for (auto chunk:map.loadedChunks)
+    for (auto chunk:map.loadedChunks) {
       for (auto light:chunk->lightPoints)
         drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
 
-    window.draw(mainSprite);
-
-    for (auto chunk:map.loadedChunks) {
       for (auto object: chunk->lightObjects) {
         bool shapeOnScreen = false;
 
@@ -178,10 +174,13 @@ int main() {
         }
 
         if (shapeOnScreen)
-          object->draw(&window, offset);
+          object->draw(&objectTexture, offset, &treeTexture, &treeTextureNormal, &normalShader);
       }
     }
 
+    window.draw(mainSprite);
+    objectTexture.display();
+    window.draw(objectSprite);
     window.display();
 
     frames++;

@@ -19,7 +19,6 @@ class ArrayBufferReader : public BufferReader {
   int size;
   int place = 0;
 
-
   public:
     ArrayBufferReader(char *data, int size): data(data), size(size) {}
 
