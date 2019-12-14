@@ -8,8 +8,6 @@
 #include <SFML/Graphics.hpp>
 #include "client.h"
 
-#define THREADS 5
-
 void drawLight(
     sf::RenderTexture *mainTexture,
     sf::RenderTexture *shadowTexture,
@@ -86,11 +84,15 @@ int main() {
   sf::RenderTexture objectTexture;
   objectTexture.create(SCREEN_X,SCREEN_Y);
 
+  sf::RenderTexture objectNormalTexture;
+  objectNormalTexture.create(SCREEN_X,SCREEN_Y);
+
   sf::RenderTexture shadowTexture;
   shadowTexture.create(SCREEN_X,SCREEN_Y);
 
   sf::Sprite mainSprite(mainTexture.getTexture());
   sf::Sprite objectSprite(objectTexture.getTexture());
+  sf::Sprite objectNormalSprite(objectNormalTexture.getTexture());
   sf::Sprite shadowSprite(shadowTexture.getTexture());
 
   sf::Texture lightMask;
@@ -109,9 +111,11 @@ int main() {
   lightShader.setUniform("light", lightMask);
   lightShader.setUniform("distanceScale", scalingFactor);
 
+  lightShader.setUniform("normals", objectNormalTexture.getTexture());
+  lightShader.setUniform("sprites", objectTexture.getTexture());
+
   sf::Shader normalShader;
   normalShader.loadFromFile("resources/normal.frag", sf::Shader::Fragment);
-  normalShader.setUniform("base", mainTexture.getTexture());
 
   sf::Texture treeTexture;
   if (!treeTexture.loadFromFile("data/normalMaps/tree.png"))
@@ -154,11 +158,9 @@ int main() {
     window.clear();
     mainTexture.clear(sf::Color(0,0,0,255));
     objectTexture.clear(sf::Color(0,0,0,0));
+    objectNormalTexture.clear(sf::Color(0,0,0,0));
 
     for (auto chunk:map.loadedChunks) {
-      for (auto light:chunk->lightPoints)
-        drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
-
       for (auto object: chunk->lightObjects) {
         bool shapeOnScreen = false;
 
@@ -174,13 +176,16 @@ int main() {
         }
 
         if (shapeOnScreen)
-          object->draw(&objectTexture, offset, &treeTexture, &treeTextureNormal, &normalShader);
+          object->draw(&objectTexture, &objectNormalTexture, offset, &treeTexture, &treeTextureNormal, &normalShader);
       }
+
+      for (auto light:chunk->lightPoints)
+        drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
     }
 
     window.draw(mainSprite);
     objectTexture.display();
-    window.draw(objectSprite);
+    objectNormalTexture.display();
     window.display();
 
     frames++;

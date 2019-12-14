@@ -7,6 +7,8 @@
 
 #include <SFML/Graphics.hpp>
 
+class Map;
+
 #define SCREEN_X 1000
 #define SCREEN_Y 800
 
@@ -44,7 +46,8 @@ class LightObject {
     sf::Vector2f negPoint;
 
     void draw(
-        sf::RenderTexture *window,
+        sf::RenderTexture *spriteRenderTexture,
+        sf::RenderTexture *normalRenderTexture,
         sf::Vector2f offset,
         sf::Texture *texture,
         sf::Texture *normalTexture,

@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include "lighting.h"
+#include "map.h"
 
 #define PI 3.141592659
 
@@ -86,7 +87,8 @@ sf::Vector2f extendLineSegment(LightPoint *light, sf::Vector2f *edge, float winx
 }
 
 void LightObject::draw(
-    sf::RenderTexture *window,
+    sf::RenderTexture *spriteRenderTexture,
+    sf::RenderTexture *normalRenderTexture,
     sf::Vector2f offset,
     sf::Texture *texture,
     sf::Texture *normalTexture,
@@ -98,10 +100,11 @@ void LightObject::draw(
       object[x].texCoords = corners->at(x);
     }
 
-    normalShader->setUniform("offset", offset);
+    normalShader->setUniform("texture", *normalTexture);
+    normalRenderTexture->draw(object, normalShader);
+
     normalShader->setUniform("texture", *texture);
-    normalShader->setUniform("normalTexture", *normalTexture);
-    window->draw(object, normalShader);
+    spriteRenderTexture->draw(object, normalShader);
 }
 
 // returns array of triangle points
