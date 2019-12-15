@@ -73,16 +73,21 @@ def reducePoints(points):
 
   while x < len(points) - 1:
     p1 = points[x]
-    p2 = points[(x + 2) % (len(points)-1)]
-    p3 = points[(x + 4) % (len(points)-1)]
+    p2 = points[(x + 1) % (len(points)-1)]
+    p3 = points[(x + 2) % (len(points)-1)]
+    p4 = points[(x + 3) % (len(points)-1)]
 
     s1Vec = norm([p1[0] - p2[0], p1[1] - p2[1]])
     s2Vec = norm([p1[0] - p3[0], p1[1] - p3[1]])
+    s3Vec = norm([p1[0] - p4[0], p1[1] - p4[1]])
 
-    print dot(s1Vec, s2Vec)
+    if (lastVec != None):
+      s1Dot = 1-dot(lastVec, s1Vec)
+      s2Dot = 1-dot(lastVec, s2Vec)
+      s3Dot = 1-dot(lastVec, s3Vec)
 
-    if lastVec != None and dot(s1Vec, lastVec) < 0.87 and dot(s1Vec, s2Vec) >= 0.85:
-      lines.append(points[x])
+      if s2Dot != 0.0 and s2Dot >= 0.25 and s3Dot >= 0.25:
+        lines.append(points[x])
 
     lastVec = s1Vec
     x += 1
@@ -124,12 +129,13 @@ def trace(offsetX, offsetY, path):
   pixels = np.array([[[0, 0, 0]] * len(img[0])] * len(img))
   lines = reducePoints(ordered);
 
+  returnPoints = ""
+
   for pix in lines:
     pixels[pix[1]][pix[0]] = (255, 255, 255)
-    print pix[0] + offsetX, pix[1] + offsetY,
-  
-  print
-  print len(lines)
+    returnPoints += str(pix[0] + offsetX) + " " + str(pix[1] + offsetY) + " "
 
   image = Image.fromarray(pixels.astype('uint8'), 'RGB')
   image.save('/'.join(path.split('/')[:-1]) + '/outline.png')
+
+  return returnPoints[:-1]

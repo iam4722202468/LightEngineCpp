@@ -19,7 +19,6 @@ for map in maps:
         
         trace(line[1], line[2], base + 'texture.png')
 
-
     for id,x in enumerate(shapedat.split('\n')):
         if len(x) == 0:
             continue
