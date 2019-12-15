@@ -58,41 +58,33 @@ def find(x, y, arr):
 
   return ret
 
+def norm(vector):
+    dist = (vector[0]**2 + vector[1]**2)**0.5
+    return [vector[0]/dist, vector[1]/dist]
+
+def dot(v1, v2):
+    return v1[0]*v2[0] + v1[1]*v2[1]
+
 def reducePoints(points):
   x = 0
 
-  lastSlope = None
-  lastSlopeVert = False
+  lastVec = None
   lines = []
 
-  while x < len(points) - 2:
+  while x < len(points) - 1:
     p1 = points[x]
-    p2 = points[x + 1]
+    p2 = points[(x + 2) % (len(points)-1)]
+    p3 = points[(x + 4) % (len(points)-1)]
 
-    s1Vert = False
-    s1 = None
+    s1Vec = norm([p1[0] - p2[0], p1[1] - p2[1]])
+    s2Vec = norm([p1[0] - p3[0], p1[1] - p3[1]])
 
-    if p1[0] - p2[0] == 0:
-      s1Vert = True
-    else :
-      s1 = (p1[1] - p2[1]) / (p1[0] - p2[0])
-      lastSlopeVert = False
+    print dot(s1Vec, s2Vec)
 
-    if lastSlopeVert and s1Vert:
-      x += 1
-      lastSlope = None
-      continue
+    if lastVec != None and dot(s1Vec, lastVec) < 0.87 and dot(s1Vec, s2Vec) >= 0.85:
+      lines.append(points[x])
 
-    if s1Vert:
-      lastSlopeVert = True
-
-    if lastSlope != None and s1 != None and abs(lastSlope - s1) < 0.1:
-      x += 1
-      lastSlope = s1
-      continue
-
-    lastSlope = s1
-    lines.append(points[x])
+    lastVec = s1Vec
     x += 1
 
   return lines
@@ -121,6 +113,8 @@ def trace(offsetX, offsetY, path):
           start = [ix, iy]
 
   current = start
+  found[start[1]][start[0]] = 1
+
   ordered = []
 
   while (current != None):
