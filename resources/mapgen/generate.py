@@ -3,6 +3,9 @@ import os
 from trace import trace
 
 maps = next(os.walk('./maps'))[1]
+flatten = lambda l: [item for sublist in l for item in sublist]
+
+lookup = {}
 
 for map in maps:
     print map
@@ -16,18 +19,33 @@ for map in maps:
     for id,shape in enumerate(shapes.read()[:-1].split('\n')):
         line = shape.split(' ')
         base = './textures/' + line[0] + '/'
+        path = base + 'texture.png'
+
+        x = []
         
-        x = trace(line[1], line[2], base + 'texture.png')
+        if path in lookup:
+            x = lookup[path]
+            print "found"
+        else:
+            x = trace(path)
+            x = [[point[0] + int(line[1]), point[1] + int(line[2])] for point in x]
+            x = flatten(x)
+            print "added"
+            lookup[path] = x
 
         if len(x) == 0:
             continue
 
         data = struct.pack('B', 0) # pack
         data += struct.pack('i', id) # pack
-        data += struct.pack('h', len(x.split(' ')))
+        data += struct.pack('h', len(x))
 
-        for y in x.split(' '):
-            data += struct.pack('i', int(y)) # pack
+        ## offset x and y
+        data += struct.pack('i', int(line[1]))
+        data += struct.pack('i', int(line[2]))
+
+        for y in x:
+            data += struct.pack('i', y) # pack
 
         data = struct.pack('i', len(data)+4) + data
         f.write(data)

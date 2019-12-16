@@ -97,10 +97,7 @@ def reducePoints(points):
 
   return lines
 
-def trace(offsetX, offsetY, path):
-  offsetX = int(offsetX)
-  offsetY = int(offsetY)
-
+def trace(path):
   img = np.asarray(PIL.Image.open(path))
   found = np.array([[[None, None]] * len(img[0])] * len(img))
 
@@ -132,13 +129,10 @@ def trace(offsetX, offsetY, path):
   pixels = np.array([[[0, 0, 0]] * len(img[0])] * len(img))
   lines = reducePoints(ordered);
 
-  returnPoints = ""
-
   for pix in lines:
     pixels[pix[1]][pix[0]] = (255, 255, 255)
-    returnPoints += str(pix[0] + offsetX) + " " + str(pix[1] + offsetY) + " "
 
   image = Image.fromarray(pixels.astype('uint8'), 'RGB')
   image.save('/'.join(path.split('/')[:-1]) + '/outline.png')
 
-  return returnPoints[:-1]
+  return lines

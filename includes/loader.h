@@ -39,6 +39,8 @@ LightObject *loadLightObject(BufferReader *file) {
 
   int id = file->getInt();
   int length = file->getShort();
+  int offx = file->getInt();
+  int offy = file->getInt();
 
   for (int i = 0; i < length/2; ++i) {
     int x = file->getInt();
@@ -54,7 +56,7 @@ LightObject *loadLightObject(BufferReader *file) {
   file->read(bytes, current-start);
 
   if (tempVec->size() > 0)
-    return new LightObject(id, tempVec, bytes);
+    return new LightObject(id, tempVec, offx, offy, bytes);
 
   delete bytes;
   delete tempVec;
