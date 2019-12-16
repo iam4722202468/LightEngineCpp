@@ -25,12 +25,10 @@ for map in maps:
         
         if path in lookup:
             x = lookup[path]
-            print "found"
         else:
             x = trace(path)
             x = [[point[0] + int(line[1]), point[1] + int(line[2])] for point in x]
             x = flatten(x)
-            print "added"
             lookup[path] = x
 
         if len(x) == 0:

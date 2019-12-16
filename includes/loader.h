@@ -56,7 +56,7 @@ LightObject *loadLightObject(BufferReader *file) {
   file->read(bytes, current-start);
 
   if (tempVec->size() > 0)
-    return new LightObject(id, tempVec, offx, offy, bytes);
+    return new LightObject(id, tempVec, sf::Vector2f(offx, offy*2), bytes);
 
   delete bytes;
   delete tempVec;

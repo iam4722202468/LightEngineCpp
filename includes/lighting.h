@@ -39,7 +39,7 @@ class LightObject {
     char *bytes; // src for generated objects
     int renderMethod = 2;
 
-    int spriteOffsetX, spriteOffsetY;
+    sf::Vector2f spriteOffset;
 
     // Store largest and small x/y positions
     sf::Vector2f posPoint;
@@ -56,7 +56,7 @@ class LightObject {
 
     // returns array of triangle points
     void getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor);
-    LightObject(int id, std::vector<sf::Vector2f> *corners, int spriteOffsetX, int spriteOffsetY, char *bytes): id(id), corners(corners), bytes(bytes) {
+    LightObject(int id, std::vector<sf::Vector2f> *corners, sf::Vector2f spriteOffset, char *bytes): id(id), corners(corners), spriteOffset(spriteOffset), bytes(bytes) {
       bool foundNegx = false;
       bool foundPosx = false;
       bool foundNegy = false;

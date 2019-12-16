@@ -96,7 +96,7 @@ void LightObject::draw(
     sf::VertexArray object(sf::TrianglesFan, corners->size());
     for (unsigned int x = 0; x < corners->size(); ++x) {
       object[x].position = corners->at(x) - offset;
-      object[x].texCoords = corners->at(x);
+      object[x].texCoords = corners->at(x) - spriteOffset;
     }
 
     normalShader->setUniform("texture", *normalTexture);
