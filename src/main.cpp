@@ -163,7 +163,7 @@ int main() {
     objectTexture.clear(sf::Color(0,0,0,0));
     objectNormalTexture.clear(sf::Color(0,0,0,0));
 
-    counter += 0.01;
+    //counter += 0.01;
 
     for (auto chunk:map.loadedChunks) {
       for (auto object: chunk->lightObjects) {
@@ -185,8 +185,8 @@ int main() {
       }
 
       //if (chunk->lightPoints.size() > 0) {
-      //  chunk->lightPoints.at(1)->pos.x = sin(counter)*200+300;
-      //  chunk->lightPoints.at(1)->pos.y = cos(counter)*200+300;
+      //  chunk->lightPoints.at(0)->pos.x = sin(counter)*200+300;
+      //  chunk->lightPoints.at(0)->pos.y = cos(counter)*200+300;
       //}
 
       for (auto light:chunk->lightPoints) {

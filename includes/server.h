@@ -102,7 +102,7 @@ class Server {
     Map map;
 
     Server() {
-      loadMap("data/format", &map);
+      loadMap("resources/mapgen/bin/map1.bin", &map);
       std::cout << "Loaded map " << map.loadedChunks.size() << std::endl;;
     }
 

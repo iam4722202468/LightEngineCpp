@@ -13,13 +13,12 @@ for map in maps:
 
     shapedat = ""
     
-    for shape in shapes.read()[:-1].split('\n'):
+    for id,shape in enumerate(shapes.read()[:-1].split('\n')):
         line = shape.split(' ')
         base = './textures/' + line[0] + '/'
         
-        trace(line[1], line[2], base + 'texture.png')
+        x = trace(line[1], line[2], base + 'texture.png')
 
-    for id,x in enumerate(shapedat.split('\n')):
         if len(x) == 0:
             continue
 

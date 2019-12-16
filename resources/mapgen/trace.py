@@ -82,10 +82,13 @@ def reducePoints(points):
     s3Vec = norm([p1[0] - p4[0], p1[1] - p4[1]])
 
     if (lastVec != None):
+      ## Dot product will show us the difference in lines
+      ## If lines are too different, we want to add another point between them
       s1Dot = 1-dot(lastVec, s1Vec)
       s2Dot = 1-dot(lastVec, s2Vec)
       s3Dot = 1-dot(lastVec, s3Vec)
 
+      ## If no consistent same slope line is detected, add a point
       if s2Dot != 0.0 and s2Dot >= 0.25 and s3Dot >= 0.25:
         lines.append(points[x])
 

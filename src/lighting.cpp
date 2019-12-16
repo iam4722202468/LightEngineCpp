@@ -30,7 +30,6 @@ float distance(LightPoint *a, sf::Vector2f b) {
   return sqrt(pow(a->pos.x - b.x, 2) + pow(a->pos.y - b.y, 2));
 }
 
-// Not needed
 float distance(sf::Vector2f a, LightPoint *b) {
   return sqrt(pow(a.x - b->pos.x, 2) + pow(a.y - b->pos.y, 2));
 }
@@ -109,10 +108,10 @@ void LightObject::draw(
 
 // returns array of triangle points
 void LightObject::getShadow(LightPoint *light, std::vector<sf::Vector2f> *shadowPoints, sf::Vector2f offset, float scalingFactor) {
-  float winxs = this->negPoint.x - 1000/scalingFactor;
-  float winxe = this->posPoint.x + 1000/scalingFactor;
-  float winys = this->negPoint.y - 1000/scalingFactor;
-  float winye = this->posPoint.y + 1000/scalingFactor;
+  float winxs = this->negPoint.x - 1000;
+  float winxe = this->posPoint.x + 1000;
+  float winys = this->negPoint.y - 1000;
+  float winye = this->posPoint.y + 1000;
 
   sf::Vector2f inner;
   sf::Vector2f outer;
