@@ -11,7 +11,9 @@
 void drawLight(
     sf::RenderTexture *mainTexture,
     sf::RenderTexture *shadowTexture,
+    sf::Sprite *heightSprite,
     sf::Shader *lightShader,
+    sf::Shader *heightShader,
     sf::Sprite *mainSprite,
     sf::Sprite *shadowSprite,
     LightPoint *light,
@@ -50,6 +52,10 @@ void drawLight(
 
         if (shapeOnScreen)
           object->getShadow(light, &shadows, offset, scalingFactor);
+      } else if (object->renderMethod == 2) {
+        heightShader->setUniform("lightpos", light->pos);
+        heightShader->setUniform("offset", offset);
+        mainTexture->draw(*heightSprite, heightShader);
       }
     }
 
@@ -118,20 +124,33 @@ int main() {
 
   sf::Shader normalShader;
   normalShader.loadFromFile("resources/normal.frag", sf::Shader::Fragment);
+  normalShader.setUniform("textureSize", sf::Vector2f(512.0, 428.0));
+
+  sf::Shader heightShader;
+  heightShader.loadFromFile("resources/height.frag", sf::Shader::Vertex);
 
   sf::Texture treeTexture;
-  if (!treeTexture.loadFromFile("data/normalMaps/tree.png"))
+  if (!treeTexture.loadFromFile("data/normalMaps/texture.png"))
   {
     std::cout << "data/normalMaps/tree.png not found" << std::endl;
     return 1;
   }
 
   sf::Texture treeTextureNormal;
-  if (!treeTextureNormal.loadFromFile("data/normalMaps/tree_normal.png"))
+  if (!treeTextureNormal.loadFromFile("data/normalMaps/normal.png"))
   {
     std::cout << "data/normalMaps/tree_normal.png not found" << std::endl;
     return 1;
   }
+
+  sf::Texture treeTextureHeight;
+  if (!treeTextureHeight.loadFromFile("data/normalMaps/height.png"))
+  {
+    std::cout << "data/normalMaps/tree_height.png not found" << std::endl;
+    return 1;
+  }
+
+  sf::Sprite heightSprite(treeTextureHeight);
 
   sf::Clock clock;
   int frames = 0;
@@ -190,7 +209,7 @@ int main() {
       //}
 
       for (auto light:chunk->lightPoints) {
-        drawLight(&mainTexture, &shadowTexture, &lightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
+        drawLight(&mainTexture, &shadowTexture, &heightSprite, &lightShader, &heightShader, &mainSprite, &shadowSprite, light, map.loadedChunks, offset, scalingFactor);
       }
     }
 

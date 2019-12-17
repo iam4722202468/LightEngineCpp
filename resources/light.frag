@@ -19,8 +19,8 @@ void main()
   vec4 normalcol = texture2D(normals,gl_TexCoord[0].xy);
   vec4 spritecol = texture2D(sprites,gl_TexCoord[0].xy);
 
-  float distance = distance(gl_FragCoord.xy, lightpos) ;
-  distance += rand(gl_TexCoord[0].x* gl_TexCoord[0].y * lightpos) * distance/20.0;
+  float distance = distance(gl_FragCoord.xy, lightpos);
+  distance += rand(gl_TexCoord[0].x * gl_TexCoord[0].y * lightpos) * distance/20.0;
   distance *= distanceScale;
 
   vec4 shadows = texture2D(mask, gl_TexCoord[0].xy);
